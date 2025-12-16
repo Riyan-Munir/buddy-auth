@@ -122,6 +122,7 @@ app.post("/login", async (req, res) => {
     const FIREBASE_API_KEY = process.env.FIREBASE_API_KEY;
     if (!FIREBASE_API_KEY) throw new Error("Missing FIREBASE_API_KEY in .env");
 
+    // Sign in via REST API
     const response = await fetch(
       `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${FIREBASE_API_KEY}`,
       {
@@ -138,7 +139,18 @@ app.post("/login", async (req, res) => {
     }
 
     console.log("[DEBUG] Login successful:", data);
-    res.json({ message: "Login successful", token: data.idToken, refreshToken: data.refreshToken });
+
+    // Get UID from Admin SDK
+    const userRecord = await admin.auth().getUserByEmail(email);
+
+    // Send both UID and ID token
+    res.json({
+      message: "Login successful",
+      uid: userRecord.uid,      // for your DB queries
+      idToken: data.idToken,    // for AI API requests
+      refreshToken: data.refreshToken
+    });
+
   } catch (err) {
     console.log("[DEBUG] Login error:", err.message);
     res.status(500).json({ error: err.message });
