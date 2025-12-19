@@ -91,23 +91,56 @@ async function verifyToken(req, res, next) {
 // --- Routes ---
 
 // Signup
+// Signup
 app.post("/signup", async (req, res) => {
-  console.log("[DEBUG] /signup called with body:", req.body);
+  console.log("[DEBUG] /signup called");
+  console.log("[DEBUG] Headers:", req.headers);
+  console.log("[DEBUG] Body:", req.body);
+
+  // Validate JSON body
+  if (!req.body || Object.keys(req.body).length === 0) {
+    console.log("[DEBUG] Empty or invalid JSON body");
+    return res.status(400).json({ error: "Invalid or empty JSON body" });
+  }
+
   const { email, password } = req.body;
+
   if (!email || !password) {
     console.log("[DEBUG] Missing email or password");
-    return res.status(400).json({ error: 'Email and password required' });
+    return res.status(400).json({ error: "Email and password required" });
   }
 
   try {
-    const user = await admin.auth().createUser({ email, password });
+    const user = await admin.auth().createUser({
+      email,
+      password
+    });
+
     console.log("[DEBUG] Firebase user created:", user.uid);
-    res.json({ message: "User created", uid: user.uid });
+
+    return res.status(201).json({
+      message: "User created",
+      uid: user.uid
+    });
+
   } catch (err) {
-    console.log("[DEBUG] Signup error:", err.message);
-    res.status(500).json({ error: err.message });
+    console.error("[DEBUG] Signup error:", err);
+
+    // Firebase-specific errors → better messages
+    if (err.code === "auth/email-already-exists") {
+      return res.status(409).json({ error: "Email already registered" });
+    }
+
+    if (err.code === "auth/invalid-password") {
+      return res.status(400).json({ error: "Password is too weak" });
+    }
+
+    return res.status(500).json({
+      error: err.message || "Internal server error"
+    });
   }
 });
+
 
 // Login (server-side Firebase)
 app.post("/login", async (req, res) => {
