@@ -91,7 +91,6 @@ async function verifyToken(req, res, next) {
 // --- Routes ---
 
 // Signup
-// Signup
 app.post("/signup", async (req, res) => {
   console.log("[DEBUG] /signup called");
   console.log("[DEBUG] Headers:", req.headers);
@@ -207,6 +206,25 @@ app.post("/reset-password", async (req, res) => {
   } catch (err) {
     console.log("[DEBUG] Reset password error:", err.message);
     res.status(500).json({ error: err.message });
+  }
+});
+
+// Change password
+app.post("/change-password", verifyToken, async (req, res) => {
+  console.log("[DEBUG] /change-password called with body:", req.body);
+  const { uid, password } = req.body;
+
+  if (!uid || !password) {
+    return res.status(400).json({ success: false, error: "UID and password required" });
+  }
+
+  try {
+    await admin.auth().updateUser(uid, { password });
+    console.log(`[DEBUG] Password updated for UID ${uid}`);
+    res.json({ success: true, message: "Password updated successfully" });
+  } catch (err) {
+    console.error("[DEBUG] Change password error:", err);
+    res.status(500).json({ success: false, error: err.message });
   }
 });
 
