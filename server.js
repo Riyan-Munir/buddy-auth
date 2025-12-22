@@ -209,8 +209,8 @@ app.post("/reset-password", async (req, res) => {
   }
 });
 
-// Change password
-app.post("/change-password", verifyToken, async (req, res) => {
+// Change Password
+app.post("/change-password", async (req, res) => {
   console.log("[DEBUG] /change-password called with body:", req.body);
   const { uid, password } = req.body;
 
